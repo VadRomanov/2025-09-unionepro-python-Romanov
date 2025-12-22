@@ -1,3 +1,10 @@
+import enum
+
+class TaskStatus(enum.Enum):
+    IN_PROCESS = ('В процессе')
+    DONE = ('Завершено')
+
+
 class Employee:
     def __init__(self, name, position, salary, hours_worked=0):
         self.name = name
@@ -18,17 +25,17 @@ class Task:
     def __init__(self, title, description):
         self.title = title
         self.description = description
-        self.status = "В процессе"
+        self.status = TaskStatus.IN_PROCESS
         self.assigned_employee = None
 
     def assign_employee(self, employee):
         self.assigned_employee = employee
 
     def mark_complete(self):
-        self.status = "Завершено"
+        self.status = TaskStatus.DONE
 
     def is_complete(self):
-        return True if self.status == "Завершено" else False
+        return self.status == TaskStatus.DONE
 
 
 class Project:
@@ -52,7 +59,7 @@ if __name__ == '__main__':
     hermione = Employee('Hermione', 'Middle+', 110)
     ron = Employee('Ron', 'Middle-', 90)
     dumbledore = Employee('Dumbledore', 'Senior+', 220, 20)
-    mc_gonagall  = Employee('McGonagall', 'Senior', 200, 30)
+    mc_gonagall = Employee('McGonagall', 'Senior', 200, 30)
     hagrid = Employee('Hagrid', 'Senior-', 180, 15)
 
     kill_evil = Task('Kill evil', 'Kill all evil')
@@ -90,7 +97,6 @@ if __name__ == '__main__':
     print("Init project progress:")
     for project in projects:
         print(f'{project.title} - {project.project_progress()}')
-
 
     harry.add_hours(160)
     hermione.add_hours(160)
