@@ -13,25 +13,17 @@ def find_email_in_text(text):
 
 def read_csv_to_df(file_path):
     df = pd.read_csv(file_path)
-    print(df.head())
     return df.dropna()
 
 
 if __name__ == '__main__':
+    content = None
     with open('text.txt', 'r', encoding='utf-8') as file:
         content = file.read()
-        emails = find_email_in_text(content)
-        print(emails)
+    emails = find_email_in_text(content)
+    print(emails)
+
+    print()
 
     df_without_gaps = read_csv_to_df('train.csv')
     print(df_without_gaps.head())
-
-# Задание №2.
-# Дополнительное задание:
-# Используя библиотеки для Web Scraping соберите список 20 последних новостей компании ПАО
-# Ростелеком:
-# https://www.company.rt.ru/ir/news_calendar/
-# Необходимо сохранить данные по следующим блокам в список словарей Python
-# - дата новости
-# - заголовок новости
-# - ссылка на полную статью о новости
