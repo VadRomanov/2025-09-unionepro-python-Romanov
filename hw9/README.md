@@ -1,8 +1,11 @@
 # Инструкция по работе с Git
-![logo git png](images/git_logo.png)
 
 ## Содержание:
 ### [Основные комманды](#main-commands)  
+### [Логотип](#logo)
+
+### <a name="logo">Логотип</a>
+![logo git png](images/git_logo.png)
 
 ### <a name="main-commands">Основные комманды</a>
 
