@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактировать путешествие</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Редактировать путешествие</h1>
+            <a href="index.html" class="back-link">← Назад</a>
+        </header>
+        
+        <main class="form-content">
+            <form id="editTripForm" class="trip-form">
+                <div class="form-group">
+                    <label for="name">Название путешествия *</label>
+                    <input type="text" id="name" name="name" required placeholder="Например: Отпуск в Париже">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startDate">Дата начала</label>
+                        <input type="date" id="startDate" name="startDate">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="endDate">Дата окончания</label>
+                        <input type="date" id="endDate" name="endDate">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Билеты</label>
+                    <div id="editTicketsContainer"></div>
+                    <button type="button" class="btn btn-add" onclick="addEditTicket()">+ Добавить билет</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Размещение</label>
+                    <div id="editAccommodationsContainer"></div>
+                    <button type="button" class="btn btn-add" onclick="addEditAccommodation()">+ Добавить размещение</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Заметки</label>
+                    <div id="editNotesContainer"></div>
+                    <button type="button" class="btn btn-add" onclick="addEditNote()">+ Добавить заметку</button>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    <button type="button" class="btn btn-danger" id="deleteBtn">Удалить путешествие</button>
+                    <a href="#" class="btn btn-secondary" id="cancelBtn">Отмена</a>
+                </div>
+            </form>
+        </main>
+    </div>
+    
+    <script src="script.js"></script>
+    <script>
+        let editTicketCounter = 0;
+        let editAccommodationCounter = 0;
+        let editNoteCounter = 0;
+
+        window.addEditTicket = function(ticketData = null) {
+            const container = document.getElementById('editTicketsContainer');
+            const ticketId = `edit_ticket_${editTicketCounter++}`;
+            const ticketDiv = document.createElement('div');
+            ticketDiv.className = 'dynamic-item';
+            ticketDiv.id = ticketId;
+            ticketDiv.innerHTML = `
+                <div class="dynamic-item-header">
+                    <h4>Билет</h4>
+                    <button type="button" class="btn-remove" onclick="removeItem('${ticketId}')">×</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Тип транспорта *</label>
+                        <select class="ticket-type" required>
+                            <option value="">Выберите тип</option>
+                            <option value="самолет" ${ticketData?.type === 'самолет' ? 'selected' : ''}>Самолет</option>
+                            <option value="поезд" ${ticketData?.type === 'поезд' ? 'selected' : ''}>Поезд</option>
+                            <option value="автобус" ${ticketData?.type === 'автобус' ? 'selected' : ''}>Автобус</option>
+                            <option value="автомобиль" ${ticketData?.type === 'автомобиль' ? 'selected' : ''}>Автомобиль</option>
+                            <option value="другое" ${ticketData?.type === 'другое' ? 'selected' : ''}>Другое</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Место отправления *</label>
+                        <input type="text" class="ticket-departure" required placeholder="Город отправления" value="${ticketData?.departure || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Место прибытия *</label>
+                        <input type="text" class="ticket-arrival" required placeholder="Город прибытия" value="${ticketData?.arrival || ''}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Дата и время отправления</label>
+                        <input type="datetime-local" class="ticket-departure-date-time" value="${ticketData?.startDate || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Дата и время прибытия</label>
+                        <input type="datetime-local" class="ticket-arrival-date-time" value="${ticketData?.endDate || ''}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Прикрепить файл</label>
+                    <input type="file" class="ticket-file" accept="image/*,.pdf">
+                    ${ticketData?.fileUrl ? `<p class="file-info">Текущий файл: ${ticketData.fileUrl}</p>` : ''}
+                </div>
+            `;
+            container.appendChild(ticketDiv);
+        }
+
+        window.addEditAccommodation = function(accommodationData = null) {
+            const container = document.getElementById('editAccommodationsContainer');
+            const accommodationId = `edit_accommodation_${editAccommodationCounter++}`;
+            const accommodationDiv = document.createElement('div');
+            accommodationDiv.className = 'dynamic-item';
+            accommodationDiv.id = accommodationId;
+            accommodationDiv.innerHTML = `
+                <div class="dynamic-item-header">
+                    <h4>Размещение</h4>
+                    <button type="button" class="btn-remove" onclick="removeItem('${accommodationId}')">×</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Тип размещения *</label>
+                        <select class="accommodation-type" required>
+                            <option value="">Выберите тип</option>
+                            <option value="отель" ${accommodationData?.type === 'отель' ? 'selected' : ''}>Отель</option>
+                            <option value="апартаменты" ${accommodationData?.type === 'апартаменты' ? 'selected' : ''}>Апартаменты</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Название *</label>
+                    <input type="text" class="accommodation-name" required placeholder="Название размещения" value="${accommodationData?.name || ''}">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Дата заселения</label>
+                        <input type="date" class="accommodation-check-in-date" value="${accommodationData?.checkin || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Дата выезда</label>
+                        <input type="date" class="accommodation-check-out-date" value="${accommodationData?.checkout || ''}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Адрес</label>
+                    <input type="text" class="accommodation-address" placeholder="Адрес размещения" value="${accommodationData?.address || ''}">
+                </div>
+                <div class="form-group">
+                    <label>Прикрепить файл</label>
+                    <input type="file" class="accommodation-file" accept="image/*,.pdf">
+                    ${accommodationData?.fileUrl ? `<p class="file-info">Текущий файл: ${accommodationData.fileUrl}</p>` : ''}
+                </div>
+            `;
+            container.appendChild(accommodationDiv);
+        }
+
+        window.addEditNote = function(noteData = null) {
+            const container = document.getElementById('editNotesContainer');
+            const noteId = `edit_note_${editNoteCounter++}`;
+            const noteDiv = document.createElement('div');
+            noteDiv.className = 'dynamic-item';
+            noteDiv.id = noteId;
+            noteDiv.innerHTML = `
+                <div class="dynamic-item-header">
+                    <h4>Заметка</h4>
+                    <button type="button" class="btn-remove" onclick="removeItem('${noteId}')">×</button>
+                </div>
+                <div class="form-group">
+                    <label>Заголовок</label>
+                    <input type="text" class="note-title" placeholder="Заголовок заметки" value="${noteData?.title || ''}">
+                </div>
+                <div class="form-group">
+                    <label>Текст *</label>
+                    <textarea class="note-content" rows="4" required placeholder="Текст заметки">${(noteData?.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+                </div>
+            `;
+            container.appendChild(noteDiv);
+        }
+
+        window.removeItem = function(id) {
+            const item = document.getElementById(id);
+            if (item) {
+                item.remove();
+            }
+        }
+
+        // Установить href для кнопки "Отмена" на trip-details.html с ID путешествия
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tripId = urlParams.get('id');
+            const cancelBtn = document.getElementById('cancelBtn');
+            if (cancelBtn && tripId) {
+                cancelBtn.href = `trip-details.html?id=${tripId}`;
+            }
+        });
+    </script>
+</body>
+</html>

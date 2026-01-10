@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создать путешествие</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Создать новое путешествие</h1>
+            <a href="index.html" class="back-link">← Назад</a>
+        </header>
+        
+        <main class="form-content">
+            <form id="createTripForm" class="trip-form">
+                <div class="form-group">
+                    <label for="name">Название путешествия *</label>
+                    <input type="text" id="name" name="name" required placeholder="Например: Отпуск в Париже">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startDate">Дата начала</label>
+                        <input type="date" id="startDate" name="startDate">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="endDate">Дата окончания</label>
+                        <input type="date" id="endDate" name="endDate">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Билеты</label>
+                    <div id="ticketsContainer"></div>
+                    <button type="button" class="btn btn-add" onclick="addTicket()">+ Добавить билет</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Размещение</label>
+                    <div id="accommodationsContainer"></div>
+                    <button type="button" class="btn btn-add" onclick="addAccommodation()">+ Добавить размещение</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Заметки</label>
+                    <div id="notesContainer"></div>
+                    <button type="button" class="btn btn-add" onclick="addNote()">+ Добавить заметку</button>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Создать путешествие</button>
+                    <a href="index.html" class="btn btn-secondary">Отмена</a>
+                </div>
+            </form>
+        </main>
+    </div>
+    
+    <script src="script.js"></script>
+    <script>
+        let ticketCounter = 0;
+        let accommodationCounter = 0;
+        let noteCounter = 0;
+
+        function addTicket() {
+            const container = document.getElementById('ticketsContainer');
+            const ticketId = `ticket_${ticketCounter++}`;
+            const ticketDiv = document.createElement('div');
+            ticketDiv.className = 'dynamic-item';
+            ticketDiv.id = ticketId;
+            ticketDiv.innerHTML = `
+                <div class="dynamic-item-header">
+                    <h4>Новый билет</h4>
+                    <button type="button" class="btn-remove" onclick="removeItem('${ticketId}')">×</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Тип транспорта *</label>
+                        <select class="ticket-type" required>
+                            <option value="">Выберите тип</option>
+                            <option value="самолет">Самолет</option>
+                            <option value="поезд">Поезд</option>
+                            <option value="автобус">Автобус</option>
+                            <option value="автомобиль">Автомобиль</option>
+                            <option value="другое">Другое</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Место отправления *</label>
+                        <input type="text" class="ticket-departure" required placeholder="Город отправления">
+                    </div>
+                    <div class="form-group">
+                        <label>Место прибытия *</label>
+                        <input type="text" class="ticket-arrival" required placeholder="Город прибытия">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Дата и время отправления</label>
+                        <input type="datetime-local" class="ticket-departure-date-time">
+                    </div>
+                    <div class="form-group">
+                        <label>Дата и время прибытия</label>
+                        <input type="datetime-local" class="ticket-arrival-date-time">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Прикрепить файл</label>
+                    <input type="file" class="ticket-file" accept="image/*,.pdf">
+                </div>
+            `;
+            container.appendChild(ticketDiv);
+        }
+
+        function addAccommodation() {
+            const container = document.getElementById('accommodationsContainer');
+            const accommodationId = `accommodation_${accommodationCounter++}`;
+            const accommodationDiv = document.createElement('div');
+            accommodationDiv.className = 'dynamic-item';
+            accommodationDiv.id = accommodationId;
+            accommodationDiv.innerHTML = `
+                <div class="dynamic-item-header">
+                    <h4>Новое размещение</h4>
+                    <button type="button" class="btn-remove" onclick="removeItem('${accommodationId}')">×</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Тип размещения *</label>
+                        <select class="accommodation-type" required>
+                            <option value="">Выберите тип</option>
+                            <option value="отель">Отель</option>
+                            <option value="апартаменты">Апартаменты</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Название *</label>
+                    <input type="text" class="accommodation-name" required placeholder="Название размещения">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Дата заселения</label>
+                        <input type="date" class="accommodation-check-in-date">
+                    </div>
+                    <div class="form-group">
+                        <label>Дата выезда</label>
+                        <input type="date" class="accommodation-check-out-date">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Адрес</label>
+                    <input type="text" class="accommodation-address" placeholder="Адрес размещения">
+                </div>
+                <div class="form-group">
+                    <label>Прикрепить файл</label>
+                    <input type="file" class="accommodation-file" accept="image/*,.pdf">
+                </div>
+            `;
+            container.appendChild(accommodationDiv);
+        }
+
+        function addNote() {
+            const container = document.getElementById('notesContainer');
+            const noteId = `note_${noteCounter++}`;
+            const noteDiv = document.createElement('div');
+            noteDiv.className = 'dynamic-item';
+            noteDiv.id = noteId;
+            noteDiv.innerHTML = `
+                <div class="dynamic-item-header">
+                    <h4>Новая заметка</h4>
+                    <button type="button" class="btn-remove" onclick="removeItem('${noteId}')">×</button>
+                </div>
+                <div class="form-group">
+                    <label>Заголовок</label>
+                    <input type="text" class="note-title" placeholder="Заголовок заметки">
+                </div>
+                <div class="form-group">
+                    <label>Текст *</label>
+                    <textarea class="note-content" rows="4" required placeholder="Текст заметки"></textarea>
+                </div>
+            `;
+            container.appendChild(noteDiv);
+        }
+
+        function removeItem(id) {
+            const item = document.getElementById(id);
+            if (item) {
+                item.remove();
+            }
+        }
+    </script>
+</body>
+</html>
+
