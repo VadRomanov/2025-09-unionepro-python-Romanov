@@ -1,11 +1,54 @@
 // API базовый URL
 const API_BASE_URL = 'http://localhost:5000/api';
 
+// Проверка аутентификации
+async function checkAuth() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            // Пользователь не аутентифицирован, перенаправляем на страницу входа
+            if (window.location.pathname !== '/login.html' && window.location.pathname !== '/register.html') {
+                window.location.href = 'login.html';
+            }
+            return null;
+        }
+        const data = await response.json();
+        return data.user;
+    } catch (error) {
+        console.error('Ошибка проверки аутентификации:', error);
+        if (window.location.pathname !== '/login.html' && window.location.pathname !== '/register.html') {
+            window.location.href = 'login.html';
+        }
+        return null;
+    }
+}
+
+// Выход из системы
+async function logout() {
+    try {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        window.location.href = 'login.html';
+    } catch (error) {
+        console.error('Ошибка при выходе:', error);
+    }
+}
+
 // Получить все путешествия
 async function getTrips() {
     try {
-        const response = await fetch(`${API_BASE_URL}/trips`);
+        const response = await fetch(`${API_BASE_URL}/trips`, {
+            credentials: 'include'
+        });
         if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = 'login.html';
+                return [];
+            }
             throw new Error('Ошибка при загрузке путешествий');
         }
         return await response.json();
@@ -24,6 +67,7 @@ async function saveTrip(trip) {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify(trip)
         });
         
@@ -47,6 +91,7 @@ async function updateTrip(id, tripData) {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify(tripData)
         });
         
@@ -66,7 +111,8 @@ async function updateTrip(id, tripData) {
 async function deleteTrip(id) {
     try {
         const response = await fetch(`${API_BASE_URL}/trips/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -84,7 +130,9 @@ async function deleteTrip(id) {
 // Получить путешествие по ID
 async function getTripById(id) {
     try {
-        const response = await fetch(`${API_BASE_URL}/trips/${id}`);
+        const response = await fetch(`${API_BASE_URL}/trips/${id}`, {
+            credentials: 'include'
+        });
         if (!response.ok) {
             throw new Error('Путешествие не найдено');
         }
@@ -236,6 +284,7 @@ if (document.getElementById('createTripForm')) {
         try {
             const response = await fetch(`${API_BASE_URL}/trips`, {
                 method: 'POST',
+                credentials: 'include',
                 body: formData
             });
             
@@ -384,6 +433,7 @@ if (document.getElementById('editTripForm')) {
         try {
             const response = await fetch(`${API_BASE_URL}/trips/${tripId}`, {
                 method: 'PUT',
+                credentials: 'include',
                 body: formData
             });
             

@@ -2,7 +2,7 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-from models import Trip, Ticket, Accommodation, Note
+from models import Trip, Ticket, Accommodation, Note, User
 from typing import List, Optional, Dict, Any
 
 
@@ -201,3 +201,96 @@ class TripRepository:
         self.session.delete(trip)
         self.session.commit()
         return True
+
+
+class UserRepository:
+    """Репозиторий для работы с пользователями"""
+    
+    def __init__(self, session: Session):
+        """
+        Инициализация репозитория
+        
+        Args:
+            session: SQLAlchemy сессия
+        """
+        self.session = session
+    
+    def get_by_username(self, username: str) -> Optional[User]:
+        """
+        Получить пользователя по username
+        
+        Args:
+            username: Username пользователя
+            
+        Returns:
+            Optional[User]: Пользователь или None, если не найден
+        """
+        return self.session.query(User).filter(User.username == username).first()
+    
+    def get_by_id(self, user_id: int) -> Optional[User]:
+        """
+        Получить пользователя по ID
+        
+        Args:
+            user_id: ID пользователя
+            
+        Returns:
+            Optional[User]: Пользователь или None, если не найден
+        """
+        return self.session.query(User).filter(User.id == user_id).first()
+    
+    def create(self, username: str, password: str) -> User:
+        """
+        Создать нового пользователя
+        
+        Args:
+            username: username пользователя
+            password: Пароль пользователя
+            
+        Returns:
+            User: Созданный пользователь
+        """
+        user = User(username=username)
+        user.set_password(password)
+        self.session.add(user)
+        self.session.commit()
+        self.session.refresh(user)
+        return user
+    
+    def add_trip_to_user(self, user_id: int, trip_id: int) -> bool:
+        """
+        Добавить путешествие пользователю
+        
+        Args:
+            user_id: ID пользователя
+            trip_id: ID путешествия
+            
+        Returns:
+            bool: True, если успешно добавлено
+        """
+        user = self.get_by_id(user_id)
+        trip = self.session.query(Trip).filter(Trip.id == trip_id).first()
+        
+        if not user or not trip:
+            return False
+        
+        if trip not in user.trips:
+            user.trips.append(trip)
+            self.session.commit()
+        
+        return True
+    
+    def get_user_trips(self, user_id: int) -> List[Trip]:
+        """
+        Получить все путешествия пользователя
+        
+        Args:
+            user_id: ID пользователя
+            
+        Returns:
+            List[Trip]: Список путешествий пользователя
+        """
+        user = self.get_by_id(user_id)
+        if not user:
+            return []
+        return user.trips

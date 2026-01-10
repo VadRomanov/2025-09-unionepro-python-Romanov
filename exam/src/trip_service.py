@@ -1,6 +1,6 @@
 """Сервис для работы с путешествиями"""
 from flask import jsonify
-from storage import TripRepository
+from storage import TripRepository, UserRepository
 import json
 
 
@@ -16,35 +16,52 @@ class TripService:
         session = self.db.get_session()
         return TripRepository(session), session
 
-    def get_trips(self):
-        """Получить все путешествия"""
-        repository, session = self.get_trip_repository()
+    def get_user_repository(self):
+        """Получить репозиторий для работы с пользователями"""
+        session = self.db.get_session()
+        return UserRepository(session), session
+
+    def get_user_trips(self, user_id):
+        """Получить все путешествия пользователя"""
+        user_repository, user_session = self.get_user_repository()
         try:
-            trips = repository.get_all()
+            trips = user_repository.get_user_trips(user_id)
             return jsonify([trip.to_dict() for trip in trips]), 200
         except Exception as e:
             return jsonify({'error': str(e)}), 500
         finally:
-            session.close()
+            user_session.close()
 
-    def get_trip(self, trip_id):
-        """Получить путешествие по ID"""
+    def get_trip(self, user_id, trip_id):
+        """Получить путешествие по ID (только если принадлежит пользователю)"""
         repository, session = self.get_trip_repository()
         try:
             trip = repository.get_by_id(int(trip_id))
-            if trip:
-                return jsonify(trip.to_dict()), 200
-            return jsonify({'error': 'Путешествие не найдено'}), 404
-        except ValueError:
+            if not trip:
+                return jsonify({'error': 'Путешествие не найдено'}), 404
+            
+            # Проверка, принадлежит ли путешествие пользователю
+            trip_users_id = []
+            for user in trip.users:
+                trip_users_id.append(user.id)
+
+            if user_id not in trip_users_id:
+               return jsonify({'error': 'Доступ запрещен'}), 403
+
+            return jsonify(trip.to_dict()), 200
+        except ValueError as e:
+            print(f'Error: {e}')
             return jsonify({'error': 'Неверный формат ID'}), 400
         except Exception as e:
+            print(f'Error: {e}')
             return jsonify({'error': str(e)}), 500
         finally:
             session.close()
 
-    def create_trip(self, content_type, form, files, get_json_func):
+    def create_trip(self, user_id, content_type, form, files, get_json_func):
         """Создать новое путешествие"""
         repository, session = self.get_trip_repository()
+        user_repository, user_session = self.get_user_repository()
         try:
             # Проверяем, есть ли файлы в запросе
             if content_type and 'multipart/form-data' in content_type:
@@ -78,18 +95,35 @@ class TripService:
 
             # Создание нового путешествия через репозиторий
             new_trip = repository.create(data)
+            
+            # Связываем путешествие с пользователем
+            user = user_repository.get_by_id(user_id)
+            if user:
+                user_repository.add_trip_to_user(user_id, new_trip.id)
+            
             return jsonify(new_trip.to_dict()), 201
 
         except Exception as e:
             session.rollback()
+            user_session.rollback()
             return jsonify({'error': str(e)}), 500
         finally:
             session.close()
+            user_session.close()
 
-    def update_trip(self, trip_id, content_type, form, files, get_json_func):
+    def update_trip(self, user_id, trip_id, content_type, form, files, get_json_func):
         """Обновить путешествие"""
         repository, session = self.get_trip_repository()
+        user_repository, user_session = self.get_user_repository()
         try:
+            # Проверка прав доступа
+            trip = repository.get_by_id(int(trip_id))
+            if not trip:
+                return jsonify({'error': 'Путешествие не найдено'}), 404
+            
+            user = user_repository.get_by_id(user_id)
+            if user and trip not in user.trips:
+                return jsonify({'error': 'Доступ запрещен'}), 403
             # Проверяем, есть ли файлы в запросе
             if content_type and 'multipart/form-data' in content_type:
                 # Обработка multipart/form-data
@@ -151,14 +185,20 @@ class TripService:
         finally:
             session.close()
 
-    def delete_trip(self, trip_id):
+    def delete_trip(self, user_id, trip_id):
         """Удалить путешествие"""
         repository, session = self.get_trip_repository()
+        user_repository, user_session = self.get_user_repository()
         try:
             # Получаем путешествие перед удалением, чтобы удалить файлы
             trip = repository.get_by_id(int(trip_id))
             if not trip:
                 return jsonify({'error': 'Путешествие не найдено'}), 404
+
+            # Проверка прав доступа
+            user = user_repository.get_by_id(user_id)
+            if user and trip not in user.trips:
+                return jsonify({'error': 'Доступ запрещен'}), 403
 
             # Удаляем файлы из MinIO
             for ticket in trip.tickets:
@@ -179,6 +219,8 @@ class TripService:
             return jsonify({'error': 'Неверный формат ID'}), 400
         except Exception as e:
             session.rollback()
+            user_session.rollback()
             return jsonify({'error': str(e)}), 500
         finally:
             session.close()
+            user_session.close()
