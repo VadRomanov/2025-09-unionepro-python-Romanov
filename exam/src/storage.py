@@ -76,6 +76,7 @@ class TripRepository:
         """
         # Создание основного объекта путешествия
         trip = Trip(
+            id=trip_data.get('id', ''),
             name=trip_data.get('name', ''),
             start_date=self._parse_datetime(trip_data.get('startDate')),
             end_date=self._parse_datetime(trip_data.get('endDate'))
@@ -204,8 +205,8 @@ class TripRepository:
         return True
 
     def get_next_trip_id(self):
-        self.session.query(trips_id_seq.next_value()).scalar()
-        self.session.commit()
+        next_id = self.session.query(trips_id_seq.next_value()).scalar()
+        return next_id
 
 
 class UserRepository:

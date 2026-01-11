@@ -38,16 +38,16 @@ class MinIOService:
             content_type = file.content_type or 'application/octet-stream'
 
             # Генерируем имя файла
-            object_name = self.prepare_file_name(trip_id, file_type, file.filename)
+            object_name = self.prepare_file_name(trip_id, file_type.name, file.filename)
 
             # Загружаем в MinIO
-            file_url = self.minio_client.upload_file(
+            self.minio_client.upload_file(
                 file_data,
                 object_name,
                 content_type
             )
 
-            return file_url
+            return object_name
         return None
 
     def delete_file(self, file_url: str) -> bool:

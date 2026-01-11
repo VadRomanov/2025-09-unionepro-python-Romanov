@@ -1,5 +1,7 @@
 """Сервис для работы с путешествиями"""
 from flask import jsonify
+
+from exam.src.minio_service import FileType
 from storage import TripRepository, UserRepository
 import json
 
@@ -79,7 +81,7 @@ class TripService:
                     file_key = f'ticket_file_{i}'
                     if file_key in files:
                         file = files[file_key]
-                        file_url = self.minio_service.upload_file_to_minio(file, next_trip_id, self.minio_service.FileType.TICKET)
+                        file_url = self.minio_service.upload_file_to_minio(file, next_trip_id, FileType.TICKET)
                         if file_url:
                             ticket['fileUrl'] = file_url
 
@@ -88,7 +90,7 @@ class TripService:
                     file_key = f'accommodation_file_{i}'
                     if file_key in files:
                         file = files[file_key]
-                        file_url = self.minio_service.upload_file_to_minio(file, next_trip_id, self.minio_service.FileType.ACCOMMODATION)
+                        file_url = self.minio_service.upload_file_to_minio(file, next_trip_id, FileType.ACCOMMODATION)
                         if file_url:
                             accommodation['fileUrl'] = file_url
             else:
@@ -156,7 +158,7 @@ class TripService:
                         if ticket.get('fileUrl'):
                             self.minio_service.delete_file(ticket['fileUrl'])
                         # Загружаем новый файл
-                        file_url = self.minio_service.upload_file_to_minio(file, trip_id, self.minio_service.FileType.TICKET)
+                        file_url = self.minio_service.upload_file_to_minio(file, trip_id, FileType.TICKET)
                         if file_url:
                             ticket['fileUrl'] = file_url
 
@@ -169,7 +171,7 @@ class TripService:
                         if accommodation.get('fileUrl'):
                             self.minio_service.delete_file(accommodation['fileUrl'])
                         # Загружаем новый файл
-                        file_url = self.minio_service.upload_file_to_minio(file, trip_id, self.minio_service.FileType.ACCOMMODATION)
+                        file_url = self.minio_service.upload_file_to_minio(file, trip_id, FileType.ACCOMMODATION)
                         if file_url:
                             accommodation['fileUrl'] = file_url
             else:
