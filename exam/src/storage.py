@@ -2,13 +2,14 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
 
+from exam.src.models import trips_id_seq
 from models import Trip, Ticket, Accommodation, Note, User
 from typing import List, Optional, Dict, Any
 
 
 class TripRepository:
     """Репозиторий для работы с путешествиями"""
-    
+
     def __init__(self, session: Session):
         """
         Инициализация репозитория
@@ -17,7 +18,7 @@ class TripRepository:
             session: SQLAlchemy сессия
         """
         self.session = session
-    
+
     @staticmethod
     def _parse_datetime(date_string: str | None) -> datetime | None:
         """
@@ -41,7 +42,7 @@ class TripRepository:
                 return datetime.fromisoformat(date_string)
         except (ValueError, AttributeError):
             return None
-    
+
     def get_all(self) -> list[type[Trip]]:
         """
         Получить все путешествия
@@ -50,7 +51,7 @@ class TripRepository:
             List[Trip]: Список всех путешествий
         """
         return self.session.query(Trip).all()
-    
+
     def get_by_id(self, trip_id: int) -> Optional[Trip]:
         """
         Получить путешествие по ID
@@ -62,7 +63,7 @@ class TripRepository:
             Optional[Trip]: Путешествие или None, если не найдено
         """
         return self.session.query(Trip).filter(Trip.id == trip_id).first()
-    
+
     def create(self, trip_data: Dict[str, Any]) -> Trip:
         """
         Создать новое путешествие
@@ -79,7 +80,7 @@ class TripRepository:
             start_date=self._parse_datetime(trip_data.get('startDate')),
             end_date=self._parse_datetime(trip_data.get('endDate'))
         )
-        
+
         # Добавление билетов (используем relationship, trip_id установится автоматически)
         for ticket_data in trip_data.get('tickets', []):
             ticket = Ticket(
@@ -91,7 +92,7 @@ class TripRepository:
                 file_url=ticket_data.get('fileUrl')
             )
             trip.tickets.append(ticket)
-        
+
         # Добавление размещений (используем relationship, trip_id установится автоматически)
         for accommodation_data in trip_data.get('accommodations', []):
             accommodation = Accommodation(
@@ -103,7 +104,7 @@ class TripRepository:
                 file_url=accommodation_data.get('fileUrl')
             )
             trip.accommodations.append(accommodation)
-        
+
         # Добавление заметок (используем relationship, trip_id установится автоматически)
         for note_data in trip_data.get('notes', []):
             note = Note(
@@ -111,12 +112,12 @@ class TripRepository:
                 content=note_data.get('content')
             )
             trip.notes.append(note)
-        
+
         self.session.add(trip)
         self.session.commit()
         self.session.refresh(trip)
         return trip
-    
+
     def update(self, trip_id: int, trip_data: Dict[str, Any]) -> Optional[Trip]:
         """
         Обновить путешествие
@@ -131,7 +132,7 @@ class TripRepository:
         trip = self.get_by_id(trip_id)
         if not trip:
             return None
-        
+
         # Обновление основных полей
         if 'name' in trip_data:
             trip.name = trip_data.get('name')
@@ -139,12 +140,12 @@ class TripRepository:
             trip.start_date = self._parse_datetime(trip_data.get('startDate'))
         if 'endDate' in trip_data:
             trip.end_date = self._parse_datetime(trip_data.get('endDate'))
-        
+
         # Удаление старых связанных объектов
         self.session.query(Ticket).filter(Ticket.trip_id == trip_id).delete()
         self.session.query(Accommodation).filter(Accommodation.trip_id == trip_id).delete()
         self.session.query(Note).filter(Note.trip_id == trip_id).delete()
-        
+
         # Добавление новых билетов
         for ticket_data in trip_data.get('tickets', []):
             ticket = Ticket(
@@ -157,7 +158,7 @@ class TripRepository:
                 file_url=ticket_data.get('fileUrl')
             )
             trip.tickets.append(ticket)
-        
+
         # Добавление новых размещений
         for accommodation_data in trip_data.get('accommodations', []):
             accommodation = Accommodation(
@@ -170,7 +171,7 @@ class TripRepository:
                 file_url=accommodation_data.get('fileUrl')
             )
             trip.accommodations.append(accommodation)
-        
+
         # Добавление новых заметок
         for note_data in trip_data.get('notes', []):
             note = Note(
@@ -179,11 +180,11 @@ class TripRepository:
                 content=note_data.get('content')
             )
             trip.notes.append(note)
-        
+
         self.session.commit()
         self.session.refresh(trip)
         return trip
-    
+
     def delete(self, trip_id: int) -> bool:
         """
         Удалить путешествие
@@ -197,15 +198,19 @@ class TripRepository:
         trip = self.get_by_id(trip_id)
         if not trip:
             return False
-        
+
         self.session.delete(trip)
         self.session.commit()
         return True
 
+    def get_next_trip_id(self):
+        self.session.query(trips_id_seq.next_value()).scalar()
+        self.session.commit()
+
 
 class UserRepository:
     """Репозиторий для работы с пользователями"""
-    
+
     def __init__(self, session: Session):
         """
         Инициализация репозитория
@@ -214,7 +219,7 @@ class UserRepository:
             session: SQLAlchemy сессия
         """
         self.session = session
-    
+
     def get_by_username(self, username: str) -> Optional[User]:
         """
         Получить пользователя по username
@@ -226,7 +231,7 @@ class UserRepository:
             Optional[User]: Пользователь или None, если не найден
         """
         return self.session.query(User).filter(User.username == username).first()
-    
+
     def get_by_id(self, user_id: int) -> Optional[User]:
         """
         Получить пользователя по ID
@@ -238,7 +243,7 @@ class UserRepository:
             Optional[User]: Пользователь или None, если не найден
         """
         return self.session.query(User).filter(User.id == user_id).first()
-    
+
     def create(self, username: str, password: str) -> User:
         """
         Создать нового пользователя
@@ -256,7 +261,7 @@ class UserRepository:
         self.session.commit()
         self.session.refresh(user)
         return user
-    
+
     def add_trip_to_user(self, user_id: int, trip_id: int) -> bool:
         """
         Добавить путешествие пользователю
@@ -270,16 +275,16 @@ class UserRepository:
         """
         user = self.get_by_id(user_id)
         trip = self.session.query(Trip).filter(Trip.id == trip_id).first()
-        
+
         if not user or not trip:
             return False
-        
+
         if trip not in user.trips:
             user.trips.append(trip)
             self.session.commit()
-        
+
         return True
-    
+
     def get_user_trips(self, user_id: int) -> List[Trip]:
         """
         Получить все путешествия пользователя

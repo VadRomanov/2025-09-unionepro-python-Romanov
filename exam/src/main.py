@@ -112,4 +112,5 @@ def delete_trip(trip_id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = os.getenv('DB_USER', 5000)
+    app.run(debug=True, port=int(port))

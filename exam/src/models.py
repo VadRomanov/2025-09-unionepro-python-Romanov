@@ -1,11 +1,14 @@
 """Модели данных для приложения планировщика путешествий"""
-from sqlalchemy import Column, String, DateTime, ForeignKey, Text, BigInteger, Table
+from sqlalchemy import Column, String, DateTime, ForeignKey, Text, BigInteger, Table, Sequence
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import hashlib
 
 Base = declarative_base()
+
+# Последовательность для trips id
+trips_id_seq = Sequence('trips_id_seq', Base.metadata)
 
 # Таблица связи многие-ко-многим между пользователями и путешествиями
 trip_users = Table(

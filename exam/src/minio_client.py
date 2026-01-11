@@ -2,13 +2,12 @@
 from minio import Minio
 from minio.error import S3Error
 import os
-from typing import Optional
-import uuid
+from io import BytesIO
 
 
 class MinIOClient:
     """Класс для работы с MinIO объектным хранилищем"""
-    
+
     def __init__(self):
         """
         Инициализация клиента MinIO
@@ -19,7 +18,7 @@ class MinIOClient:
         self.secret_key = os.getenv('MINIO_SECRET_KEY', 'password')
         self.secure = os.getenv('MINIO_SECURE', 'false').lower() == 'true'
         self.bucket_name = os.getenv('MINIO_BUCKET', 'plan-your-trip-file-bucket')
-        
+
         # Инициализация клиента MinIO
         self.client = Minio(
             self.endpoint,
@@ -27,10 +26,10 @@ class MinIOClient:
             secret_key=self.secret_key,
             secure=self.secure
         )
-        
+
         # Создание бакета, если его нет
         self._ensure_bucket_exists()
-    
+
     def _ensure_bucket_exists(self):
         """Проверить существование бакета и создать его, если нужно"""
         try:
@@ -38,29 +37,19 @@ class MinIOClient:
                 self.client.make_bucket(self.bucket_name)
         except S3Error as e:
             print(f"Ошибка при создании бакета: {e}")
-    
-    def upload_file(self, file_data: bytes, file_name: str, content_type: str = 'application/octet-stream') -> Optional[str]:
+
+    def upload_file(self, file_data: bytes, object_name: str, content_type: str = 'application/octet-stream'):
         """
         Загрузить файл в MinIO
         
         Args:
             file_data: Данные файла в виде bytes
-            file_name: Имя файла
+            object_name: Имя объекта
             content_type: MIME-тип файла
-            
-        Returns:
-            str: URL файла или None в случае ошибки
         """
         try:
-            # Генерируем уникальное имя файла
-            file_extension = os.path.splitext(file_name)[1]
-            unique_file_name = f"{uuid.uuid4()}{file_extension}"
-            object_name = f"uploads/{unique_file_name}"
-            
-            # Загружаем файл
-            from io import BytesIO
             file_stream = BytesIO(file_data)
-            
+
             self.client.put_object(
                 self.bucket_name,
                 object_name,
@@ -68,24 +57,12 @@ class MinIOClient:
                 length=len(file_data),
                 content_type=content_type
             )
-            
-            # Возвращаем URL файла
-            # Для публичного доступа используем прямую ссылку
-            if self.secure:
-                protocol = 'https'
-            else:
-                protocol = 'http'
-            
-            url = f"{protocol}://{self.endpoint}/{self.bucket_name}/{object_name}"
-            return url
-            
+
         except S3Error as e:
             print(f"Ошибка при загрузке файла в MinIO: {e}")
-            return None
         except Exception as e:
             print(f"Неожиданная ошибка при загрузке файла: {e}")
-            return None
-    
+
     def delete_file(self, file_url: str) -> bool:
         """
         Удалить файл из MinIO по URL
@@ -102,13 +79,13 @@ class MinIOClient:
             parts = file_url.split(f'/{self.bucket_name}/')
             if len(parts) != 2:
                 return False
-            
+
             object_name = parts[1]
-            
+
             # Удаляем объект
             self.client.remove_object(self.bucket_name, object_name)
             return True
-            
+
         except S3Error as e:
             print(f"Ошибка при удалении файла из MinIO: {e}")
             return False

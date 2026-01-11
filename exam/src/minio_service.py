@@ -1,5 +1,10 @@
 """Сервис для работы с MinIO"""
-from werkzeug.utils import secure_filename
+import enum
+
+
+class FileType(enum.Enum):
+    TICKET = 1,
+    ACCOMMODATION = 2
 
 
 class MinIOService:
@@ -9,12 +14,14 @@ class MinIOService:
         self.minio_client = minio_client
         self.max_file_size = max_file_size
 
-    def upload_file_to_minio(self, file) -> str:
+    def upload_file_to_minio(self, file, trip_id, file_type: FileType) -> str:
         """
         Загрузить файл в MinIO
 
         Args:
             file: Файл из request.files
+            trip_id: идентификатор поездки
+            file_type: тип файла
 
         Returns:
             str: URL загруженного файла или None
@@ -30,10 +37,13 @@ class MinIOService:
             # Определяем content type
             content_type = file.content_type or 'application/octet-stream'
 
+            # Генерируем имя файла
+            object_name = self.prepare_file_name(trip_id, file_type, file.filename)
+
             # Загружаем в MinIO
             file_url = self.minio_client.upload_file(
                 file_data,
-                secure_filename(file.filename),
+                object_name,
                 content_type
             )
 
@@ -51,3 +61,7 @@ class MinIOService:
             bool: True, если файл удален успешно, False в случае ошибки
         """
         return self.minio_client.delete_file(file_url)
+
+    @staticmethod
+    def prepare_file_name(trip_id, file_type, file_name):
+        return f"{trip_id}/{file_type}/{file_name}"

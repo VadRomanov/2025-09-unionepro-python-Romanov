@@ -221,8 +221,8 @@ if (document.getElementById('createTripForm')) {
                 type: item.querySelector('.ticket-type').value,
                 departure: item.querySelector('.ticket-departure').value,
                 arrival: item.querySelector('.ticket-arrival').value,
-                departureTime: item.querySelector('.ticket-departure-time').value,
-                arrivalTime: item.querySelector('.ticket-arrival-time').value
+                departureTime: item.querySelector('.ticket-departure-date-time').value,
+                arrivalTime: item.querySelector('.ticket-arrival-date-time').value
             };
             tickets.push(ticket);
         });
@@ -314,9 +314,9 @@ if (document.getElementById('editTripForm')) {
             
             if (trip) {
                 // Заполнить форму данными путешествия
-                document.getElementById('editTripName').value = trip.name || '';
-                document.getElementById('editDepartureDate').value = trip.startDate || '';
-                document.getElementById('editArrivalDate').value = trip.endDate || '';
+                document.getElementById('name').value = trip.name || '';
+                document.getElementById('startDate').value = trip.startDate || '';
+                document.getElementById('endDate').value = trip.endDate || '';
                 
                 // Загрузить билеты в структурированные формы
                 const tickets = Array.isArray(trip.tickets) ? trip.tickets : [];
@@ -365,8 +365,8 @@ if (document.getElementById('editTripForm')) {
                 type: item.querySelector('.ticket-type').value,
                 departure: item.querySelector('.ticket-departure').value,
                 arrival: item.querySelector('.ticket-arrival').value,
-                departureTime: item.querySelector('.ticket-departure-time')?.value || item.querySelector('.ticket-departure-date')?.value,
-                arrivalTime: item.querySelector('.ticket-arrival-time')?.value || item.querySelector('.ticket-arrival-date')?.value,
+                departureTime: item.querySelector('.ticket-departure-date-time').value,
+                arrivalTime: item.querySelector('.ticket-arrival-date-time').value,
                 fileUrl: existingFileUrl
             };
             tickets.push(ticket);
@@ -402,9 +402,9 @@ if (document.getElementById('editTripForm')) {
         });
         
         const tripData = {
-            name: document.getElementById('editTripName').value,
-            startDate: document.getElementById('editDepartureDate').value || null,
-            endDate: document.getElementById('editArrivalDate').value || null,
+            name: document.getElementById('name').value,
+            startDate: document.getElementById('startDate').value || null,
+            endDate: document.getElementById('endDate').value || null,
             tickets: tickets,
             accommodations: accommodations,
             notes: notes

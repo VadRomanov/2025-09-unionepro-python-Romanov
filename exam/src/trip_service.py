@@ -21,6 +21,14 @@ class TripService:
         session = self.db.get_session()
         return UserRepository(session), session
 
+    @staticmethod
+    def check_if_trip_belongs_to_user(trip, user_id):
+        trip_users_id = []
+        for user in trip.users:
+            trip_users_id.append(user.id)
+
+        return user_id in trip_users_id
+
     def get_user_trips(self, user_id):
         """Получить все путешествия пользователя"""
         user_repository, user_session = self.get_user_repository()
@@ -39,14 +47,9 @@ class TripService:
             trip = repository.get_by_id(int(trip_id))
             if not trip:
                 return jsonify({'error': 'Путешествие не найдено'}), 404
-            
-            # Проверка, принадлежит ли путешествие пользователю
-            trip_users_id = []
-            for user in trip.users:
-                trip_users_id.append(user.id)
 
-            if user_id not in trip_users_id:
-               return jsonify({'error': 'Доступ запрещен'}), 403
+            if not self.check_if_trip_belongs_to_user(trip, user_id):
+                return jsonify({'error': 'Доступ запрещен'}), 403
 
             return jsonify(trip.to_dict()), 200
         except ValueError as e:
@@ -63,6 +66,9 @@ class TripService:
         repository, session = self.get_trip_repository()
         user_repository, user_session = self.get_user_repository()
         try:
+            # Получаем следующий trip_id
+            next_trip_id = repository.get_next_trip_id()
+
             # Проверяем, есть ли файлы в запросе
             if content_type and 'multipart/form-data' in content_type:
                 # Обработка multipart/form-data
@@ -73,7 +79,7 @@ class TripService:
                     file_key = f'ticket_file_{i}'
                     if file_key in files:
                         file = files[file_key]
-                        file_url = self.minio_service.upload_file_to_minio(file)
+                        file_url = self.minio_service.upload_file_to_minio(file, next_trip_id, self.minio_service.FileType.TICKET)
                         if file_url:
                             ticket['fileUrl'] = file_url
 
@@ -82,7 +88,7 @@ class TripService:
                     file_key = f'accommodation_file_{i}'
                     if file_key in files:
                         file = files[file_key]
-                        file_url = self.minio_service.upload_file_to_minio(file)
+                        file_url = self.minio_service.upload_file_to_minio(file, next_trip_id, self.minio_service.FileType.ACCOMMODATION)
                         if file_url:
                             accommodation['fileUrl'] = file_url
             else:
@@ -94,13 +100,14 @@ class TripService:
                 return jsonify({'error': 'Название путешествия обязательно'}), 400
 
             # Создание нового путешествия через репозиторий
+            data['id'] = next_trip_id
             new_trip = repository.create(data)
-            
+
             # Связываем путешествие с пользователем
             user = user_repository.get_by_id(user_id)
             if user:
                 user_repository.add_trip_to_user(user_id, new_trip.id)
-            
+
             return jsonify(new_trip.to_dict()), 201
 
         except Exception as e:
@@ -114,16 +121,15 @@ class TripService:
     def update_trip(self, user_id, trip_id, content_type, form, files, get_json_func):
         """Обновить путешествие"""
         repository, session = self.get_trip_repository()
-        user_repository, user_session = self.get_user_repository()
         try:
             # Проверка прав доступа
             trip = repository.get_by_id(int(trip_id))
             if not trip:
                 return jsonify({'error': 'Путешествие не найдено'}), 404
-            
-            user = user_repository.get_by_id(user_id)
-            if user and trip not in user.trips:
+
+            if not self.check_if_trip_belongs_to_user(trip, user_id):
                 return jsonify({'error': 'Доступ запрещен'}), 403
+
             # Проверяем, есть ли файлы в запросе
             if content_type and 'multipart/form-data' in content_type:
                 # Обработка multipart/form-data
@@ -150,7 +156,7 @@ class TripService:
                         if ticket.get('fileUrl'):
                             self.minio_service.delete_file(ticket['fileUrl'])
                         # Загружаем новый файл
-                        file_url = self.minio_service.upload_file_to_minio(file)
+                        file_url = self.minio_service.upload_file_to_minio(file, trip_id, self.minio_service.FileType.TICKET)
                         if file_url:
                             ticket['fileUrl'] = file_url
 
@@ -163,7 +169,7 @@ class TripService:
                         if accommodation.get('fileUrl'):
                             self.minio_service.delete_file(accommodation['fileUrl'])
                         # Загружаем новый файл
-                        file_url = self.minio_service.upload_file_to_minio(file)
+                        file_url = self.minio_service.upload_file_to_minio(file, trip_id, self.minio_service.FileType.ACCOMMODATION)
                         if file_url:
                             accommodation['fileUrl'] = file_url
             else:
