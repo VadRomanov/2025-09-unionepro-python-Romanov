@@ -104,7 +104,12 @@
                                 <p><strong>Прибытие:</strong> ${ticket.arrival || 'Не указано'}</p>
                                 ${ticket.departureDate ? `<p><strong>Дата отправления:</strong> ${formatDate(ticket.departureDate)}</p>` : ''}
                                 ${ticket.arrivalDate ? `<p><strong>Дата прибытия:</strong> ${formatDate(ticket.arrivalDate)}</p>` : ''}
-                                ${ticket.file ? `<p><strong>Файл:</strong> ${ticket.file}</p>` : ''}
+                                ${ticket.fileUrl ?
+                                    `<p><strong>Файл:</strong>
+                                        <a href="#" onclick="downloadTicketFile(${trip.id}, ${ticket.id}); return false;">
+                                            ${ticket.fileUrl.split('/').pop()}
+                                        </a>
+                                    </p>` : ''}
                             </div>
                         `;
                         ticketsSection.appendChild(ticketDiv);
@@ -129,7 +134,12 @@
                                 ${accommodation.checkin ? `<p><strong>Дата заселения:</strong> ${formatDate(accommodation.checkin)}</p>` : ''}
                                 ${accommodation.checkout ? `<p><strong>Дата выезда:</strong> ${formatDate(accommodation.checkout)}</p>` : ''}
                                 ${accommodation.address ? `<p><strong>Адрес:</strong> ${accommodation.address}</p>` : ''}
-                                ${accommodation.file ? `<p><strong>Файл:</strong> ${accommodation.file}</p>` : ''}
+                                ${accommodation.fileUrl ?
+                                    `<p><strong>Файл:</strong>
+                                        <a href="#" onclick="downloadAccommodationFile(${trip.id}, ${accommodation.id}); return false;">
+                                            ${accommodation.fileUrl.split('/').pop()}
+                                        </a>
+                                    </p>` : ''}
                             </div>
                         `;
                         accommodationsSection.appendChild(accommodationDiv);

@@ -14,7 +14,7 @@ class MinIOService:
         self.minio_client = minio_client
         self.max_file_size = max_file_size
 
-    def upload_file_to_minio(self, file, trip_id, file_type: FileType) -> str:
+    def upload_file(self, file, trip_id, file_type: FileType) -> str:
         """
         Загрузить файл в MinIO
 
@@ -61,6 +61,18 @@ class MinIOService:
             bool: True, если файл удален успешно, False в случае ошибки
         """
         return self.minio_client.delete_file(file_url)
+
+    def download_file(self, file_url: str) -> str:
+        """
+        Достать файл из MinIO по URL
+
+        Args:
+            file_url: URL файла
+
+        Returns:
+            file: True, если файл удален успешно, False в случае ошибки
+        """
+        return self.minio_client.download_file(file_url)
 
     @staticmethod
     def prepare_file_name(trip_id, file_type, file_name):

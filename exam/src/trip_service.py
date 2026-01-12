@@ -81,7 +81,7 @@ class TripService:
                     file_key = f'ticket_file_{i}'
                     if file_key in files:
                         file = files[file_key]
-                        file_url = self.minio_service.upload_file_to_minio(file, next_trip_id, FileType.TICKET)
+                        file_url = self.minio_service.upload_file(file, next_trip_id, FileType.TICKET)
                         if file_url:
                             ticket['fileUrl'] = file_url
 
@@ -90,7 +90,7 @@ class TripService:
                     file_key = f'accommodation_file_{i}'
                     if file_key in files:
                         file = files[file_key]
-                        file_url = self.minio_service.upload_file_to_minio(file, next_trip_id, FileType.ACCOMMODATION)
+                        file_url = self.minio_service.upload_file(file, next_trip_id, FileType.ACCOMMODATION)
                         if file_url:
                             accommodation['fileUrl'] = file_url
             else:
@@ -158,7 +158,7 @@ class TripService:
                         if ticket.get('fileUrl'):
                             self.minio_service.delete_file(ticket['fileUrl'])
                         # Загружаем новый файл
-                        file_url = self.minio_service.upload_file_to_minio(file, trip_id, FileType.TICKET)
+                        file_url = self.minio_service.upload_file(file, trip_id, FileType.TICKET)
                         if file_url:
                             ticket['fileUrl'] = file_url
 
@@ -171,7 +171,7 @@ class TripService:
                         if accommodation.get('fileUrl'):
                             self.minio_service.delete_file(accommodation['fileUrl'])
                         # Загружаем новый файл
-                        file_url = self.minio_service.upload_file_to_minio(file, trip_id, FileType.ACCOMMODATION)
+                        file_url = self.minio_service.upload_file(file, trip_id, FileType.ACCOMMODATION)
                         if file_url:
                             accommodation['fileUrl'] = file_url
             else:
@@ -232,3 +232,38 @@ class TripService:
         finally:
             session.close()
             user_session.close()
+
+    def get_attachment(self, user_id, trip_id, file_id: int, file_type: FileType):
+        """Получить путешествие по ID (только если принадлежит пользователю)"""
+        repository, session = self.get_trip_repository()
+        try:
+            trip = repository.get_by_id(int(trip_id))
+            if not trip:
+                return jsonify({'error': 'Путешествие не найдено'}), 404
+
+            if not self.check_if_trip_belongs_to_user(trip, user_id):
+                return jsonify({'error': 'Доступ запрещен'}), 403
+
+            if file_type == FileType.ACCOMMODATION:
+                for accommodation in trip.accommodations:
+                    if accommodation.id == int(file_id):
+                        return jsonify({'url': f'{self.minio_service.download_file(accommodation.file_url)}'})
+
+            elif file_type == FileType.TICKET:
+                for ticket in trip.tickets:
+                    if ticket.id == int(file_id):
+                        return jsonify({'url': f'{self.minio_service.download_file(ticket.file_url)}'})
+
+            else:
+                print(f'Неизвестный тип файла {file_type}')
+                return jsonify({'error': 'Неизвестный тип файла'}), 500
+
+            return jsonify({'error': 'Файл для скачивания не найден'}), 500
+        except ValueError as e:
+            print(f'Error: {e}')
+            return jsonify({'error': 'Неверный формат ID'}), 400
+        except Exception as e:
+            print(f'Error: {e}')
+            return jsonify({'error': str(e)}), 500
+        finally:
+            session.close()

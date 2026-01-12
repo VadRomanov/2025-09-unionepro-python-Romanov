@@ -1,7 +1,8 @@
-from flask import Flask, request, session
+"""Главный файл для запуска сервиса"""
+from flask import Flask, request, session, Response
 from flask_cors import CORS
 from database import Database
-from exam.src.minio_service import MinIOService
+from exam.src.minio_service import MinIOService, FileType
 from exam.src.trip_service import TripService
 from exam.src.auth_service import AuthService
 from minio_client import MinIOClient
@@ -61,7 +62,7 @@ def get_trips():
     auth_error = auth_service.require_auth()
     if auth_error:
         return auth_error
-    
+
     user_id = session.get('user_id')
     return trip_service.get_user_trips(user_id)
 
@@ -83,9 +84,10 @@ def create_trip():
     auth_error = auth_service.require_auth()
     if auth_error:
         return auth_error
-    
+
     user_id = session.get('user_id')
-    return trip_service.create_trip(user_id, request.content_type, request.form, request.files, lambda: request.get_json())
+    return trip_service.create_trip(user_id, request.content_type, request.form, request.files,
+                                    lambda: request.get_json())
 
 
 @app.route('/api/trips/<trip_id>', methods=['PUT'])
@@ -94,7 +96,7 @@ def update_trip(trip_id):
     auth_error = auth_service.require_auth()
     if auth_error:
         return auth_error
-    
+
     user_id = session.get('user_id')
     return trip_service.update_trip(user_id, trip_id, request.content_type, request.form, request.files,
                                     lambda: request.get_json())
@@ -106,9 +108,31 @@ def delete_trip(trip_id):
     auth_error = auth_service.require_auth()
     if auth_error:
         return auth_error
-    
+
     user_id = session.get('user_id')
     return trip_service.delete_trip(user_id, trip_id)
+
+
+@app.route('/api/trips/<trip_id>/tickets/<ticket_id>/file', methods=['GET'])
+def get_ticket_file(trip_id, ticket_id):
+    """Получить файл билета по ID"""
+    auth_error = auth_service.require_auth()
+    if auth_error:
+        return auth_error
+
+    user_id = session.get('user_id')
+    return trip_service.get_attachment(user_id, trip_id, ticket_id, FileType.TICKET)
+
+
+@app.route('/api/trips/<trip_id>/accommodations/<accommodation_id>/file', methods=['GET'])
+def get_accommodation_file(trip_id, accommodation_id):
+    """Получить файл размещения по ID"""
+    auth_error = auth_service.require_auth()
+    if auth_error:
+        return auth_error
+
+    user_id = session.get('user_id')
+    return trip_service.get_attachment(user_id, trip_id, accommodation_id, FileType.ACCOMMODATION)
 
 
 if __name__ == '__main__':

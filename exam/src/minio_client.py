@@ -1,4 +1,6 @@
 """Клиент для работы с MinIO"""
+from datetime import timedelta
+
 from minio import Minio
 from minio.error import S3Error
 import os
@@ -92,3 +94,23 @@ class MinIOClient:
         except Exception as e:
             print(f"Неожиданная ошибка при удалении файла: {e}")
             return False
+
+    def download_file(self, object_name: str) -> str | None:
+        """
+        Скачать файл из MinIO по URL
+
+        Args:
+            object_name: имя объекта
+
+        Returns:
+            file: файл
+        """
+        try:
+            # Скачиваем объект
+            return self.client.presigned_get_object(self.bucket_name, object_name, expires=timedelta(minutes=5))
+        except S3Error as e:
+            print(f"Ошибка при скачивании файла из MinIO: {e}")
+            return None
+        except Exception as e:
+            print(f"Неожиданная ошибка при скачивании файла: {e}")
+            return None

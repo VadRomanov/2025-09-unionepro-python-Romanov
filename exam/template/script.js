@@ -465,3 +465,44 @@ if (document.getElementById('editTripForm')) {
         });
     }
 }
+
+async function downloadTicketFile(tripId, ticketId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/trips/${tripId}/tickets/${ticketId}/file`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Ошибка при получении файла билета');
+        }
+
+        const data = await response.json();
+
+        window.open(data.url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+        alert('Ошибка при получении файла билета: ' + error.message);
+    }
+}
+
+async function downloadAccommodationFile(tripId, accommodationId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/trips/${tripId}/accommodations/${accommodationId}/file`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Ошибка при получении файла размещения');
+        }
+
+        const data = await response.json();
+
+        window.open(data.url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+        alert('Ошибка при получении файла размещения: ' + error.message);
+    }
+}
+
